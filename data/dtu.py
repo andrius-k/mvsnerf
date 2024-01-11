@@ -51,8 +51,9 @@ class MVSDatasetDTU(Dataset):
 
     def build_metas(self):
         self.metas = []
-        with open(f'configs/lists/dtu_{self.split}_all.txt') as f:
-            self.scans = [line.rstrip() for line in f.readlines()]
+        # with open(f'configs/lists/dtu_{self.split}_all.txt') as f:
+        #     self.scans = [line.rstrip() for line in f.readlines()]
+        self.scans = ["scan114"]
 
         # light conditions 0-6 for training
         # light condition 3 for testing (the brightest?)
