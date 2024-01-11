@@ -575,7 +575,26 @@ def gen_render_path_pixelNeRF(c2ws, N_views=30):
 
 
 #################################################  MVS  helper functions   #####################################
-from kornia.utils import create_meshgrid
+# from kornia.utils import create_meshgrid
+
+from typing import Optional, List
+def torch_meshgrid(tensors: List, indexing: str):
+    return torch.meshgrid(tensors)
+def create_meshgrid(
+    height: int,
+    width: int,
+    normalized_coordinates: bool = True,
+    device: Optional[torch.device] = None,
+    dtype: Optional[torch.dtype] = None,
+):
+    xs = torch.linspace(0, width - 1, width, device=device, dtype=dtype)
+    ys = torch.linspace(0, height - 1, height, device=device, dtype=dtype)
+    if normalized_coordinates:
+        xs = (xs / (width - 1) - 0.5) * 2
+        ys = (ys / (height - 1) - 0.5) * 2
+    base_grid = torch.stack(torch_meshgrid([xs, ys], indexing="ij"), dim=-1)  # WxHx2
+    return base_grid.permute(1, 0, 2).unsqueeze(0)  # 1xHxWx2
+    
 
 def homo_warp(src_feat, proj_mat, depth_values, src_grid=None, pad=0):
     """
@@ -676,7 +695,7 @@ def pose_spherical_dtu(radii, focus_depth, n_poses=120, world_center=np.array([0
     return np.stack(poses_spiral, 0) @ np.array([[1,0,0,0],[0,-1,0,0],[0,0,-1,0],[0,0,0,1]])  # (n_poses, 3, 4)
 
 from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
-from warmup_scheduler import GradualWarmupScheduler
+# from warmup_scheduler import GradualWarmupScheduler
 def get_scheduler(hparams, optimizer):
     eps = 1e-8
     if hparams.lr_scheduler == 'steplr':
