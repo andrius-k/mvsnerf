@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from renderer import ndc2dist
 from torch import searchsorted
-from kornia import create_meshgrid
+# from kornia import create_meshgrid
 
 from renderer import depth2dist
 from utils import index_point_feature
