@@ -49,14 +49,6 @@ def verify(src_img, proj_mat, near_far, depths_h):
     mean = torch.tensor([-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225]).view(*shape).to(device)
     std = torch.tensor([1 / 0.229, 1 / 0.224, 1 / 0.225]).view(*shape).to(device)
 
-    # To make it even more simple, I use actual near/far bounds of this
-    # particular image, not the entire dataset.
-    # And I set the missing depths to maximum depth from the image.
-    depths_h[depths_h == 0] = depths_h.max()
-    near_far = [depths_h.min(), depths_h.max()]
-
-    near, far = near_far[0], near_far[1]
-
     depth_values = get_depth_values(near_far, src_img)
     # homo_warp comes straight from MVSNeRF
     warped_volume, src_grid = homo_warp(src_img, proj_mat, depth_values, pad=0) # [1, 3, 128, 512, 640]
@@ -75,7 +67,8 @@ def verify(src_img, proj_mat, near_far, depths_h):
     W = warped_volume.shape[4]
 
     # Create a 3D grid. Use evenly spaced x,y values and pick a single (GT) depth for z value.
-    _, y0, x0 = torch.meshgrid(
+    near, far = near_far[0], near_far[1]
+    d0, y0, x0 = torch.meshgrid(
         torch.arange(1).to(warped_volume.device).float(), 
         torch.arange(H).to(warped_volume.device).float(), 
         torch.arange(W).to(warped_volume.device).float())
@@ -85,8 +78,8 @@ def verify(src_img, proj_mat, near_far, depths_h):
     d_norm = (depths_h - near) / (far - near)
     d_norm = (2 * d_norm) - 1
 
-    sample_grid = torch.stack([d_norm, y_norm, x_norm], dim=-1).unsqueeze(dim=0) # (B, D, h, w, 3)
-    sampled = F.grid_sample(warped_volume, sample_grid, mode="bilinear", padding_mode="border", align_corners=False)
+    sample_grid = torch.stack([x_norm, y_norm, d_norm], dim=-1).unsqueeze(dim=0) # (B, D, h, w, 3)
+    sampled = F.grid_sample(warped_volume, sample_grid, mode="nearest", padding_mode="border", align_corners=False)
     # sampled: (B, C, 1, h, w)
 
     # Save the sampled image. Output is recognizable but contains lots of artifacts
