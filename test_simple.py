@@ -38,7 +38,8 @@ def verify(src_img, proj_mat, near_far, depths_h):
     # depth_values: torch.Size([1, 128])
     # pad: 0
 
-    idx = 0
+    idx = 1
+    ref_img = src_img[:, 0, ...] # [1, 3, 512, 640] reference view
     src_img = src_img[:, idx, ...] # [1, 3, 512, 640]
     proj_mat = proj_mat[:, idx, ...] # [1, 3, 4]
     depths_h = depths_h[:, 0, ...] # [1, 512, 640] reference view
@@ -94,11 +95,12 @@ def verify(src_img, proj_mat, near_far, depths_h):
     depth = (depth.numpy() * 255.).astype(np.uint8)
     cv2.imwrite(f"depth_map.jpg", depth)
 
-    # Render ref view into an image for debugging.
-    img = (src_img - mean) / std
-    img = (img[0, 0, ...].permute(1, 2, 0).detach().cpu().numpy() * 255.).astype(np.uint8)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    cv2.imwrite("gt.jpg", img)
+    # Render src and ref views into an image for debugging.
+    for img, name in [(ref_img, "ref.jpg"), (src_img, "src.jpg")]:
+        img = (img - mean) / std
+        img = (img[0, 0, ...].permute(1, 2, 0).detach().cpu().numpy() * 255.).astype(np.uint8)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        cv2.imwrite(name, img)
 
 
 def run():
@@ -119,6 +121,8 @@ def run():
         near_fars, depths_h = data_mvs['near_fars'], data_mvs['depths_h']
 
         verify(imgs[:, :4], proj_mats[:, :4], near_fars[0,0], depths_h[:, :4])
+
+        # MVSNet()(imgs[:, :3], proj_mats[:, :3], near_fars[0,0])
 
 
 if __name__ == "__main__":

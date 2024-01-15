@@ -89,7 +89,8 @@ class MVSDatasetDTU(Dataset):
 
             # multiply intrinsics and extrinsics to get projection matrix
             proj_mat_l = np.eye(4)
-            intrinsic[:2] = intrinsic[:2] / 4
+            # TODO: Uncomment this line when dealing with image features, not raw pixels
+            # intrinsic[:2] = intrinsic[:2] / 4
             proj_mat_l[:3, :4] = intrinsic @ extrinsic[:3, :4]
 
             proj_mats += [(proj_mat_l, near_far)]

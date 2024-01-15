@@ -845,6 +845,9 @@ class MVSNet(nn.Module):
         # prob_volume [B D H W]
         # volume_feature [B C D H W]
 
+        print(imgs.shape)  # [1, 3, 3, 512, 640]
+        print(feats.shape) # [1, 3, 32, 128, 160]
+
         B, V, C, H, W = feats.shape
         D = depth_values.shape[1]
         ref_feats, src_feats = feats[:, 0], feats[:, 1:]
